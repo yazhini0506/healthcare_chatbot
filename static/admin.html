@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBot Admin – Leads & Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0B1120;
+            --bg2: #111827;
+            --card: #1A2332;
+            --accent: #10B981;
+            --accent-glow: rgba(16, 185, 129, .2);
+            --blue: #3B82F6;
+            --purple: #8B5CF6;
+            --red: #EF4444;
+            --yellow: #F59E0B;
+            --text: #F1F5F9;
+            --muted: #94A3B8;
+            --dim: #64748B;
+            --border: rgba(148, 163, 184, .12);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bg-glow .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: .1;
+        }
+
+        .bg-glow .orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            top: -100px;
+            left: -80px;
+        }
+
+        .bg-glow .orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: var(--blue);
+            bottom: -100px;
+            right: -60px;
+        }
+
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            display: grid;
+            place-items: center;
+            font-size: 24px;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .04);
+            color: var(--muted);
+            cursor: pointer;
+            font: 500 13px/1 'Inter', sans-serif;
+            transition: .2s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+            background: var(--accent-glow);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #059669);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        /* Stat Cards */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 14px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card .glow {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: .15;
+            top: -30px;
+            right: -30px;
+        }
+
+        .stat-card:nth-child(1) .glow {
+            background: var(--accent);
+        }
+
+        .stat-card:nth-child(2) .glow {
+            background: var(--blue);
+        }
+
+        .stat-card:nth-child(3) .glow {
+            background: var(--purple);
+        }
+
+        .stat-card:nth-child(4) .glow {
+            background: var(--yellow);
+        }
+
+        .stat-card:nth-child(5) .glow {
+            background: var(--red);
+        }
+
+        .stat-icon {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: var(--card);
+            border-radius: 12px;
+            padding: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font: 600 13px/1 'Inter', sans-serif;
+            transition: .2s;
+            text-align: center;
+        }
+
+        .tab.active {
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--text);
+        }
+
+        /* Search bar */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .04);
+            color: var(--text);
+            font: 14px 'Inter', sans-serif;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .search-input::placeholder {
+            color: var(--dim);
+        }
+
+        .filter-select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .04);
+            color: var(--muted);
+            font: 13px 'Inter', sans-serif;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+        /* Table */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 600px;
+        }
+
+        thead {
+            background: rgba(255, 255, 255, .03);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            font-size: 11px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, .02);
+        }
+
+        td strong {
+            color: var(--text);
+        }
+
+        td small {
+            color: var(--dim);
+            font-size: 11px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, .15);
+            color: var(--accent);
+        }
+
+        .badge-blue {
+            background: rgba(59, 130, 246, .15);
+            color: var(--blue);
+        }
+
+        .badge-yellow {
+            background: rgba(245, 158, 11, .15);
+            color: var(--yellow);
+        }
+
+        .badge-purple {
+            background: rgba(139, 92, 246, .15);
+            color: var(--purple);
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, .15);
+            color: var(--red);
+        }
+
+        .cat-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            background: rgba(59, 130, 246, .1);
+            color: var(--blue);
+            margin: 2px;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--dim);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .page-info {
+            font-size: 12px;
+            color: var(--dim);
+            margin-top: 12px;
+            text-align: right;
+        }
+
+        /* Transcript Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            z-index: 100;
+            display: none;
+            place-items: center;
+            backdrop-filter: blur(6px);
+        }
+
+        .modal-overlay.show {
+            display: grid;
+        }
+
+        .modal {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 640px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, .06);
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 16px;
+            display: grid;
+            place-items: center;
+        }
+
+        .transcript-msg {
+            margin: 12px 20px;
+        }
+
+        .transcript-msg .role {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--dim);
+        }
+
+        .transcript-msg.user .role {
+            color: var(--blue);
+        }
+
+        .transcript-msg.assistant .role {
+            color: var(--accent);
+        }
+
+        .transcript-msg .text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text);
+            margin-top: 3px;
+        }
+
+        /* Source link */
+        .src-link {
+            color: var(--accent);
+            font-size: 11px;
+            text-decoration: none;
+        }
+
+        .src-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .stat-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            td,
+            th {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-glow">
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-brand">
+                <div class="header-logo">📊</div>
+                <div>
+                    <h1>HealthBot Dashboard</h1>
+                    <p>Leads, Products, Conversations & Analytics</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="location.href='/'">💬 Chat</button>
+                <button class="btn" onclick="refreshAll()">🔄 Refresh</button>
+                <button class="btn btn-primary" id="scrape-btn" onclick="triggerScrape()">🕷️ Re-Scrape</button>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="glow"></div>
+                <div class="stat-icon">💊</div>
+                <div class="stat-number" id="s-products">—</div>
+                <div class="stat-label">Scraped Products</div>
+            </div>
+            <div class="stat-card">
+                <div class="glow"></div>
+                <div class="stat-icon">📋</div>
+                <div class="stat-number" id="s-kb">—</div>
+                <div class="stat-label">KB Records</div>
+            </div>
+            <div class="stat-card">
+                <div class="glow"></div>
+                <div class="stat-icon">💬</div>
+                <div class="stat-number" id="s-conv">—</div>
+                <div class="stat-label">Conversations</div>
+            </div>
+            <div class="stat-card">
+                <div class="glow"></div>
+                <div class="stat-icon">🎯</div>
+                <div class="stat-number" id="s-leads">—</div>
+                <div class="stat-label">Qualified Leads</div>
+            </div>
+            <div class="stat-card">
+                <div class="glow"></div>
+                <div class="stat-icon">📧</div>
+                <div class="stat-number" id="s-emailed">—</div>
+                <div class="stat-label">Emails Sent</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('products')">💊 Products</button>
+            <button class="tab" onclick="switchTab('leads')">🎯 Leads</button>
+            <button class="tab" onclick="switchTab('conversations')">💬 Conversations</button>
+            <button class="tab" onclick="switchTab('kb')">📚 Knowledge Base</button>
+        </div>
+
+        <!-- ══ Products Section ════════════════════════════════════════════════ -->
+        <div class="content-section active" id="sec-products">
+            <div class="search-bar">
+                <input class="search-input" id="prod-search"
+                    placeholder="🔍 Search product name, category, manufacturer…" oninput="filterProducts()">
+                <select class="filter-select" id="prod-cat-filter" onchange="filterProducts()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Manufacturer / Source</th>
+                            <th>Description</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table">
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="icon">💊</div>Loading products…
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="page-info" id="prod-page-info"></div>
+        </div>
+
+        <!-- ══ Leads Section ══════════════════════════════════════════════════ -->
+        <div class="content-section" id="sec-leads">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Contact</th>
+                            <th>Territory</th>
+                            <th>Product Interest</th>
+                            <th>Volume</th>
+                            <th>Intent</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-table">
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="icon">🎯</div>No leads yet.
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ Conversations Section ══════════════════════════════════════════ -->
+        <div class="content-section" id="sec-conversations">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Started</th>
+                            <th>Messages</th>
+                            <th>Intent Tags</th>
+                            <th>Lead Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="conv-table">
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="icon">💬</div>No conversations yet.
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ KB Section ════════════════════════════════════════════════════ -->
+        <div class="content-section" id="sec-kb">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Records</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kb-table">
+                        <tr>
+                            <td colspan="2">
+                                <div class="empty-state">
+                                    <div class="icon">📚</div>Empty.
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+
+    <!-- Transcript Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Conversation Transcript</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div id="modal-body" style="padding-bottom:20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── State ────────────────────────────────────────────────────────────────────
+        let _allProducts = [];
+        let _productCategories = new Set();
+
+        // ── Boot ─────────────────────────────────────────────────────────────────────
+        refreshAll();
+
+        async function refreshAll() {
+            try {
+                const [kbRes, convRes, leadsRes, prodRes, prodStatsRes] = await Promise.all([
+                    fetch('/api/kb/stats'), fetch('/api/conversations'),
+                    fetch('/api/leads'), fetch('/api/products'), fetch('/api/products/stats')
+                ]);
+                const kb = await kbRes.json();
+                const convs = await convRes.json();
+                const leads = await leadsRes.json();
+                const products = await prodRes.json();
+                const prodStats = await prodStatsRes.json();
+
+                // ── Stats ─────────────────────────────────────────────────────────
+                document.getElementById('s-kb').textContent = kb.total;
+                document.getElementById('s-conv').textContent = convs.length;
+                document.getElementById('s-leads').textContent = leads.length;
+                document.getElementById('s-emailed').textContent = leads.filter(l => l.email_sent).length;
+                document.getElementById('s-products').textContent = prodStats.total;
+
+                // ── Products ──────────────────────────────────────────────────────
+                _allProducts = products;
+                _productCategories = new Set(products.map(p => p.category).filter(Boolean));
+                populateCategoryFilter();
+                renderProducts(products);
+
+                // ── Leads table ───────────────────────────────────────────────────
+                const lt = document.getElementById('leads-table');
+                lt.innerHTML = leads.length ? leads.map(l => `<tr>
+            <td><strong>${esc(l.company_name || '—')}</strong></td>
+            <td>${esc(l.contact_name || '—')}<br><small>${esc(l.designation || '')}</small></td>
+            <td>${esc(l.territory || '—')}</td>
+            <td>${esc(l.product_interest || '—')}</td>
+            <td>${esc(l.expected_volume || '—')}</td>
+            <td>${tagBadges(l.intent_tags)}</td>
+            <td><span class="badge ${l.email_sent ? 'badge-green' : 'badge-yellow'}">${l.email_sent ? '✓ Sent' : 'Pending'}</span></td>
+        </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="icon">🎯</div>No leads yet.</div></td></tr>';
+
+                // ── Conversations table ────────────────────────────────────────────
+                const ct = document.getElementById('conv-table');
+                ct.innerHTML = convs.length ? convs.map(c => `<tr>
+            <td>${c.started_at ? new Date(c.started_at).toLocaleString() : '—'}</td>
+            <td>${c.message_count || 0}</td>
+            <td>${tagBadges(c.intent_tags)}</td>
+            <td><span class="badge ${c.lead_status === 'qualified' ? 'badge-green' : 'badge-yellow'}">${c.lead_status || 'none'}</span></td>
+            <td><button class="btn" onclick="viewTranscript('${c.id}')">📖 View</button></td>
+        </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="icon">💬</div>No conversations yet.</div></td></tr>';
+
+                // ── KB table ──────────────────────────────────────────────────────
+                const kbt = document.getElementById('kb-table');
+                kbt.innerHTML = kb.categories.length ? kb.categories.map(c =>
+                    `<tr><td><strong>${esc(c.category)}</strong></td><td>${c.cnt} record${c.cnt !== 1 ? 's' : ''}</td></tr>`
+                ).join('') : '<tr><td colspan="2"><div class="empty-state"><div class="icon">📚</div>Empty.</div></td></tr>';
+
+            } catch (e) { console.error('refresh error', e); }
+        }
+
+        // ── Products ─────────────────────────────────────────────────────────────────
+        const CAT_ICONS = {
+            'Medicine': '💊', 'Analgesics & Antipyretics': '🩹', 'Antibiotics': '🦠',
+            'Antidiabetics': '🩸', 'Cardiac & Blood Pressure': '❤️', 'Vitamins & Supplements': '🌿',
+            'Gastrointestinal': '🫃', 'Respiratory & Allergy': '🌬️', 'OTC Medicine': '💊',
+            'Prescription Medicine': 'Rx', 'Diagnostic Equipment': '🔬', 'Surgical Consumables': '🩺',
+            'Surgical Equipment': '🔪', 'Hospital Furniture': '🏥', 'PPE': '🛡️',
+            'Infection Control': '🧫', 'Cold Chain Equipment': '❄️', 'Rehabilitation Equipment': '♿',
+            'Medical Device': '🩻', 'Hospital Equipment': '🏥',
+        };
+        function catIcon(cat) { return CAT_ICONS[cat] || '📋'; }
+
+        function populateCategoryFilter() {
+            const sel = document.getElementById('prod-cat-filter');
+            const current = sel.value;
+            sel.innerHTML = '<option value="">All Categories</option>';
+            [..._productCategories].sort().forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat; opt.textContent = `${catIcon(cat)} ${cat}`;
+                if (cat === current) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function filterProducts() {
+            const q = (document.getElementById('prod-search').value || '').toLowerCase();
+            const cat = document.getElementById('prod-cat-filter').value;
+            let filtered = _allProducts;
+            if (cat) filtered = filtered.filter(p => p.category === cat);
+            if (q) filtered = filtered.filter(p =>
+                (p.product_name || '').toLowerCase().includes(q) ||
+                (p.category || '').toLowerCase().includes(q) ||
+                (p.manufacturer || '').toLowerCase().includes(q) ||
+                (p.description || '').toLowerCase().includes(q)
+            );
+            renderProducts(filtered);
+        }
+
+        function renderProducts(products) {
+            const tbody = document.getElementById('products-table');
+            const info = document.getElementById('prod-page-info');
+            if (!products.length) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">💊</div>No products found. Click <strong>Re-Scrape</strong> to fetch from live sources.</div></td></tr>';
+                info.textContent = '';
+                return;
+            }
+            tbody.innerHTML = products.map((p, i) => `<tr>
+        <td style="color:var(--dim);font-size:11px;">${i + 1}</td>
+        <td><strong>${esc(p.product_name)}</strong></td>
+        <td><span class="cat-tag">${catIcon(p.category)} ${esc(p.category)}</span></td>
+        <td style="max-width:160px;">${esc(p.manufacturer || '—')}</td>
+        <td style="max-width:280px;color:var(--muted);font-size:12px;">${esc((p.description || '').substring(0, 140))}${(p.description || '').length > 140 ? '…' : ''}</td>
+        <td>${p.source_url ? `<a class="src-link" href="${esc(p.source_url)}" target="_blank" rel="noopener">🔗 Source</a>` : '—'}</td>
+    </tr>`).join('');
+            info.textContent = `Showing ${products.length} of ${_allProducts.length} products`;
+        }
+
+        // ── Tabs ──────────────────────────────────────────────────────────────────────
+        const TAB_NAMES = ['products', 'leads', 'conversations', 'kb'];
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', TAB_NAMES[i] === name));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('sec-' + name).classList.add('active');
+        }
+
+        // ── Transcript modal ──────────────────────────────────────────────────────────
+        async function viewTranscript(convId) {
+            const res = await fetch(`/api/chat/history/${convId}`);
+            const messages = await res.json();
+            document.getElementById('modal-body').innerHTML = messages.map(m => `
+        <div class="transcript-msg ${m.role}">
+            <div class="role">${m.role === 'user' ? '👤 User' : '🤖 HealthBot'} · ${m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : ''}</div>
+            <div class="text">${esc(m.content)}</div>
+        </div>`).join('');
+            document.getElementById('modal').classList.add('show');
+        }
+        function closeModal() { document.getElementById('modal').classList.remove('show'); }
+        document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+        // ── Scrape ────────────────────────────────────────────────────────────────────
+        async function triggerScrape() {
+            const btn = document.getElementById('scrape-btn');
+            btn.textContent = '⏳ Scraping…'; btn.disabled = true;
+            try {
+                const res = await fetch('/api/scrape', { method: 'POST' });
+                const data = await res.json();
+                alert(`✅ ${data.message}\nProducts in DB: ${data.products}`);
+                refreshAll();
+            } catch (e) { alert('Scrape failed: ' + e); }
+            btn.textContent = '🕷️ Re-Scrape'; btn.disabled = false;
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────────────
+        function esc(s) { const d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML; }
+        function tagBadges(tags) {
+            return (tags || '').split(',').filter(Boolean).map(t =>
+                `<span class="badge badge-blue">${esc(t.trim())}</span> `
+            ).join('') || '—';
+        }
+    </script>
+</body>
+
+</html>
