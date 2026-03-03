@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBot – Healthcare Dealer Lead Generation Agent</title>
+    <meta name="description" content="AI-powered chatbot for healthcare dealers and distributors. Get product info, distribution opportunities, and connect with our sales team.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0B1120;
+            --bg-secondary: #111827;
+            --bg-card: #1A2332;
+            --bg-input: #1E293B;
+            --accent: #10B981;
+            --accent-glow: rgba(16, 185, 129, .25);
+            --accent-light: #34D399;
+            --blue: #3B82F6;
+            --blue-glow: rgba(59,130,246,.18);
+            --purple: #8B5CF6;
+            --text: #F1F5F9;
+            --text-muted: #94A3B8;
+            --text-dim: #64748B;
+            --border: rgba(148,163,184,.12);
+            --shadow: 0 8px 32px rgba(0,0,0,.35);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: .25s cubic-bezier(.4,0,.2,1);
+        }
+
+        html { height: 100%; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ─── Animated Background ───────────────────────────── */
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+        }
+        .bg-glow .orb {
+            position: absolute; border-radius: 50%; filter: blur(100px); opacity: .12;
+            animation: float 18s ease-in-out infinite;
+        }
+        .bg-glow .orb:nth-child(1) {
+            width: 500px; height: 500px; background: var(--accent);
+            top: -120px; left: -80px; animation-delay: 0s;
+        }
+        .bg-glow .orb:nth-child(2) {
+            width: 400px; height: 400px; background: var(--blue);
+            bottom: -100px; right: -60px; animation-delay: -6s;
+        }
+        .bg-glow .orb:nth-child(3) {
+            width: 300px; height: 300px; background: var(--purple);
+            top: 40%; left: 50%; animation-delay: -12s;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.1); }
+            66% { transform: translate(-20px, 30px) scale(.95); }
+        }
+
+        /* ─── Top Bar ───────────────────────────────────────── */
+        .topbar {
+            position: relative; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 28px;
+            background: rgba(17,24,39,.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar-brand {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .topbar-logo {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            display: grid; place-items: center; font-size: 22px;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+        .topbar-title { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+        .topbar-subtitle { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+        .topbar-actions { display: flex; gap: 8px; }
+        .topbar-btn {
+            padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px;
+            background: transparent; color: var(--text-muted); cursor: pointer;
+            font-size: 13px; font-family: inherit; font-weight: 500;
+            transition: var(--transition);
+        }
+        .topbar-btn:hover {
+            background: rgba(255,255,255,.06); color: var(--text);
+            border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow);
+        }
+        .topbar-btn.primary {
+            background: linear-gradient(135deg, var(--accent), #059669);
+            border-color: transparent; color: #fff;
+        }
+        .topbar-btn.primary:hover { box-shadow: 0 0 20px var(--accent-glow); }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent); display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite; margin-right: 4px;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { box-shadow: 0 0 0 6px transparent; }
+        }
+
+        /* ─── Main Layout ───────────────────────────────────── */
+        .main-container {
+            flex: 1; display: flex; position: relative; z-index: 1; overflow: hidden;
+        }
+
+        /* ─── Sidebar ───────────────────────────────────────── */
+        .sidebar {
+            width: 280px; background: rgba(17,24,39,.5);
+            border-right: 1px solid var(--border); backdrop-filter: blur(12px);
+            display: flex; flex-direction: column; padding: 16px 12px;
+            transition: var(--transition); flex-shrink: 0;
+        }
+        .sidebar-header { font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--text-dim); padding: 8px 12px; }
+        .sidebar-item {
+            padding: 10px 14px; border-radius: var(--radius-sm);
+            cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; color: var(--text-muted); margin-bottom: 2px;
+        }
+        .sidebar-item:hover { background: rgba(255,255,255,.05); color: var(--text); }
+        .sidebar-item.active { background: var(--accent-glow); color: var(--accent-light); }
+        .sidebar-item .icon { font-size: 16px; }
+        .sidebar-stats {
+            margin-top: auto; padding: 16px; border-radius: var(--radius-sm);
+            background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.12);
+        }
+        .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase;
+            letter-spacing: .06em; margin-bottom: 4px; }
+        .stat-value { font-size: 22px; font-weight: 700; color: var(--accent-light); }
+        .stat-row { display: flex; justify-content: space-between; margin-top: 12px; }
+        .stat-mini { text-align: center; }
+        .stat-mini .val { font-size: 16px; font-weight: 600; color: var(--text); }
+        .stat-mini .lbl { font-size: 10px; color: var(--text-dim); }
+
+        /* ─── Chat Area ─────────────────────────────────────── */
+        .chat-area {
+            flex: 1; display: flex; flex-direction: column; min-width: 0;
+        }
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 24px 32px;
+            display: flex; flex-direction: column; gap: 16px;
+            scroll-behavior: smooth;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: transparent; }
+        .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ─── Welcome Screen ────────────────────────────────── */
+        .welcome {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; flex: 1; text-align: center; padding: 40px;
+        }
+        .welcome-icon {
+            width: 80px; height: 80px; border-radius: 24px;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            display: grid; place-items: center; font-size: 38px;
+            box-shadow: 0 0 40px var(--accent-glow); margin-bottom: 24px;
+            animation: float-icon 4s ease-in-out infinite;
+        }
+        @keyframes float-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .welcome h2 { font-size: 26px; font-weight: 700; margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--text), var(--accent-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .welcome p { color: var(--text-muted); font-size: 15px;
+            max-width: 480px; line-height: 1.6; margin-bottom: 28px; }
+
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .quick-btn {
+            padding: 10px 18px; border-radius: 999px;
+            border: 1px solid var(--border); background: rgba(255,255,255,.03);
+            color: var(--text-muted); font-size: 13px; font-family: inherit;
+            cursor: pointer; transition: var(--transition); font-weight: 500;
+        }
+        .quick-btn:hover {
+            border-color: var(--accent); color: var(--accent-light);
+            background: var(--accent-glow); transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        /* ─── Message Bubbles ───────────────────────────────── */
+        .msg { display: flex; gap: 12px; max-width: 88%; animation: msg-in .35s ease-out; }
+        .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+        .msg-avatar {
+            width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+            display: grid; place-items: center; font-size: 16px;
+        }
+        .msg.bot .msg-avatar { background: linear-gradient(135deg, var(--accent), var(--blue)); }
+        .msg.user .msg-avatar { background: linear-gradient(135deg, var(--purple), var(--blue)); }
+        .msg-bubble {
+            padding: 14px 18px; border-radius: var(--radius);
+            font-size: 14px; line-height: 1.65; word-break: break-word;
+        }
+        .msg.bot .msg-bubble {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-top-left-radius: 4px;
+        }
+        .msg.user .msg-bubble {
+            background: linear-gradient(135deg, var(--accent), #059669);
+            color: #fff; border-top-right-radius: 4px;
+        }
+        .msg-bubble strong { color: var(--accent-light); }
+        .msg.user .msg-bubble strong { color: #D1FAE5; }
+        .msg-time { font-size: 10px; color: var(--text-dim); margin-top: 4px; text-align: right; }
+
+        @keyframes msg-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typing indicator */
+        .typing-indicator { display: flex; gap: 5px; padding: 14px 18px; }
+        .typing-indicator span {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--text-dim); animation: blink 1.4s infinite both;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: .2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: .4s; }
+        @keyframes blink {
+            0%, 80%, 100% { opacity: .3; transform: scale(.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Intent tags strip */
+        .intent-strip {
+            display: flex; gap: 6px; flex-wrap: wrap; padding: 0 32px 6px;
+        }
+        .intent-tag {
+            padding: 4px 12px; border-radius: 999px; font-size: 11px;
+            font-weight: 600; letter-spacing: .02em;
+            background: var(--blue-glow); color: var(--blue);
+            border: 1px solid rgba(59,130,246,.2);
+            animation: msg-in .3s ease-out;
+        }
+
+        /* ─── Input Area ────────────────────────────────────── */
+        .input-area {
+            padding: 16px 32px 22px; border-top: 1px solid var(--border);
+            background: rgba(17,24,39,.5); backdrop-filter: blur(12px);
+        }
+        .input-wrap {
+            display: flex; align-items: flex-end; gap: 12px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 14px; padding: 6px 6px 6px 18px;
+            transition: var(--transition);
+        }
+        .input-wrap:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        #msg-input {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: var(--text); font-size: 14px; font-family: inherit;
+            padding: 10px 0; resize: none; max-height: 120px;
+            line-height: 1.5;
+        }
+        #msg-input::placeholder { color: var(--text-dim); }
+        .send-btn {
+            width: 42px; height: 42px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, var(--accent), #059669);
+            color: #fff; cursor: pointer; display: grid; place-items: center;
+            font-size: 18px; transition: var(--transition); flex-shrink: 0;
+        }
+        .send-btn:hover { box-shadow: 0 0 20px var(--accent-glow); transform: scale(1.05); }
+        .send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+        .input-hint { font-size: 11px; color: var(--text-dim); text-align: center;
+            margin-top: 8px; }
+
+        /* ─── Right Panel (Context) ─────────────────────────── */
+        .right-panel {
+            width: 280px; border-left: 1px solid var(--border);
+            background: rgba(17,24,39,.4); backdrop-filter: blur(12px);
+            padding: 20px 16px; overflow-y: auto; flex-shrink: 0;
+        }
+        .panel-section { margin-bottom: 24px; }
+        .panel-title {
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .08em; color: var(--text-dim); margin-bottom: 12px;
+        }
+        .panel-card {
+            padding: 12px; border-radius: var(--radius-sm);
+            background: rgba(255,255,255,.03); border: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+        .panel-card h4 { font-size: 13px; font-weight: 600; color: var(--text);
+            margin-bottom: 4px; }
+        .panel-card p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        .lead-progress { display: flex; flex-direction: column; gap: 6px; }
+        .lead-step {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text-dim);
+        }
+        .lead-step .dot {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid var(--border);
+            display: grid; place-items: center; font-size: 10px; flex-shrink: 0;
+        }
+        .lead-step.done .dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .lead-step.active .dot { border-color: var(--accent-light);
+            box-shadow: 0 0 8px var(--accent-glow); }
+
+        /* ─── Mobile Responsive ─────────────────────────────── */
+        @media (max-width: 900px) {
+            .sidebar, .right-panel { display: none; }
+            .chat-messages { padding: 16px; }
+            .input-area { padding: 12px 16px 16px; }
+        }
+        @media (max-width: 480px) {
+            .topbar { padding: 10px 16px; }
+            .topbar-title { font-size: 15px; }
+            .msg { max-width: 95%; }
+        }
+
+        /* Markdown in bot messages */
+        .msg.bot .msg-bubble ul, .msg.bot .msg-bubble ol {
+            padding-left: 18px; margin: 6px 0;
+        }
+        .msg.bot .msg-bubble li { margin-bottom: 2px; }
+        .msg.bot .msg-bubble p { margin-bottom: 6px; }
+        .msg.bot .msg-bubble p:last-child { margin-bottom: 0; }
+        .msg.bot .msg-bubble hr {
+            border: none; border-top: 1px solid var(--border); margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated background orbs -->
+<div class="bg-glow">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
+
+<!-- ─── Top Bar ────────────────────────────────────────────── -->
+<header class="topbar">
+    <div class="topbar-brand">
+        <div class="topbar-logo">🏥</div>
+        <div>
+            <div class="topbar-title">HealthBot</div>
+            <div class="topbar-subtitle"><span class="status-dot"></span>Healthcare Dealer Lead Agent</div>
+        </div>
+    </div>
+    <div class="topbar-actions">
+        <button class="topbar-btn" id="btn-admin" onclick="window.open('/admin','_blank')">📊 Dashboard</button>
+        <button class="topbar-btn primary" id="btn-new-chat" onclick="startNewChat()">＋ New Chat</button>
+    </div>
+</header>
+
+<!-- ─── Main Layout ────────────────────────────────────────── -->
+<div class="main-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">Quick Topics</div>
+        <div class="sidebar-item" onclick="sendQuick('What product categories do you offer?')">
+            <span class="icon">📦</span> Product Categories
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('Tell me about distribution partnership opportunities')">
+            <span class="icon">🤝</span> Distribution Partners
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('How can I become an authorised dealer?')">
+            <span class="icon">🏪</span> Dealer Program
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('What bulk purchase options are available?')">
+            <span class="icon">📈</span> Bulk Orders
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('Do you provide surgical consumables?')">
+            <span class="icon">🩺</span> Surgical Products
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('What diagnostic equipment do you supply?')">
+            <span class="icon">🔬</span> Diagnostics
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('Tell me about PPE and infection control products')">
+            <span class="icon">🛡️</span> PPE & Safety
+        </div>
+        <div class="sidebar-item" onclick="sendQuick('Do you support government hospital tenders?')">
+            <span class="icon">🏛️</span> Tender Support
+        </div>
+
+        <!-- Stats widget -->
+        <div class="sidebar-stats">
+            <div class="stat-label">Knowledge Base</div>
+            <div class="stat-value" id="kb-count">—</div>
+            <div class="stat-row">
+                <div class="stat-mini">
+                    <div class="val" id="cat-count">—</div>
+                    <div class="lbl">Categories</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="val" id="conv-count">—</div>
+                    <div class="lbl">Chats</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Chat -->
+    <section class="chat-area">
+        <div class="intent-strip" id="intent-strip"></div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Welcome screen -->
+            <div class="welcome" id="welcome-screen">
+                <div class="welcome-icon">🏥</div>
+                <h2>Welcome to HealthBot</h2>
+                <p>
+                    I'm your AI-powered healthcare products assistant. Ask me about
+                    product categories, distribution opportunities, dealer programs,
+                    or bulk purchasing options.
+                </p>
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="sendQuick('What healthcare products do you offer?')">🩺 Product Range</button>
+                    <button class="quick-btn" onclick="sendQuick('How do I become a dealer or distributor?')">🤝 Become a Partner</button>
+                    <button class="quick-btn" onclick="sendQuick('Tell me about bulk purchase discounts')">📦 Bulk Pricing</button>
+                    <button class="quick-btn" onclick="sendQuick('What territories are available for distribution?')">🌍 Territories</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="input-area">
+            <div class="input-wrap">
+                <textarea id="msg-input" rows="1"
+                    placeholder="Ask about products, distribution, or dealer programs…"
+                    onkeydown="handleKey(event)"></textarea>
+                <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send message">➤</button>
+            </div>
+            <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+        </div>
+    </section>
+
+    <!-- Right Panel -->
+    <aside class="right-panel">
+        <div class="panel-section">
+            <div class="panel-title">Session Info</div>
+            <div class="panel-card">
+                <h4>🤖 AI-Powered Assistance</h4>
+                <p>Responses are grounded in our product knowledge base. No hallucinated information.</p>
+            </div>
+            <div class="panel-card">
+                <h4>🔒 Privacy First</h4>
+                <p>We only collect your details after your explicit consent.</p>
+            </div>
+        </div>
+
+        <div class="panel-section" id="lead-progress-section" style="display:none;">
+            <div class="panel-title">Lead Qualification</div>
+            <div class="lead-progress" id="lead-progress"></div>
+        </div>
+
+        <div class="panel-section">
+            <div class="panel-title">Categories Available</div>
+            <div id="category-list"></div>
+        </div>
+    </aside>
+
+</div>
+
+<script>
+// ── State ───────────────────────────────────────────────────────────────────
+let convId = null;
+let isLoading = false;
+const leadFields = [
+    'Company Name', 'Contact Name & Role', 'Territory',
+    'Product Interest', 'Expected Volume', 'Email', 'Phone'
+];
+
+// ── Init ────────────────────────────────────────────────────────────────────
+async function init() {
+    await createNewConversation();
+    loadStats();
+}
+
+async function createNewConversation() {
+    try {
+        const res = await fetch('/api/chat/new', { method: 'POST' });
+        const data = await res.json();
+        convId = data.conv_id;
+    } catch (e) {
+        console.error('Failed to create conversation:', e);
+        convId = 'local-' + Date.now();
+    }
+}
+
+async function loadStats() {
+    try {
+        const [kbRes, convRes] = await Promise.all([
+            fetch('/api/kb/stats'),
+            fetch('/api/conversations')
+        ]);
+        const kb = await kbRes.json();
+        const convs = await convRes.json();
+
+        document.getElementById('kb-count').textContent = kb.total + ' Records';
+        document.getElementById('cat-count').textContent = kb.categories.length;
+        document.getElementById('conv-count').textContent = convs.length;
+
+        // Category list in right panel
+        const catList = document.getElementById('category-list');
+        catList.innerHTML = kb.categories.map(c =>
+            `<div class="panel-card"><h4>${getCatIcon(c.category)} ${c.category}</h4><p>${c.cnt} record${c.cnt!==1?'s':''}</p></div>`
+        ).join('');
+    } catch (e) {
+        console.error('Stats load failed:', e);
+    }
+}
+
+function getCatIcon(cat) {
+    const icons = {
+        'Surgical Consumables': '🩹', 'Diagnostic Equipment': '🔬',
+        'Hospital Furniture': '🏥', 'Pharmaceuticals': '💊',
+        'PPE': '🛡️', 'Distribution Opportunities': '🤝',
+        'Bulk Purchase': '📦', 'Infection Control': '🧫',
+        'Rehabilitation Equipment': '♿', 'Cold Chain Equipment': '❄️',
+    };
+    return icons[cat] || '📋';
+}
+
+// ── Chat Logic ──────────────────────────────────────────────────────────────
+function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+}
+
+function sendQuick(text) {
+    document.getElementById('msg-input').value = text;
+    sendMessage();
+}
+
+async function sendMessage() {
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text || isLoading) return;
+
+    // Hide welcome
+    const welcome = document.getElementById('welcome-screen');
+    if (welcome) welcome.style.display = 'none';
+
+    // Show user message
+    appendMessage('user', text);
+    input.value = '';
+    autoResize(input);
+
+    // Show typing indicator
+    const typingEl = showTyping();
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+
+    try {
+        const res = await fetch('/api/chat/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conv_id: convId, message: text })
+        });
+        const data = await res.json();
+
+        // Remove typing
+        typingEl.remove();
+
+        // Show bot response
+        appendMessage('bot', data.reply);
+
+        // Update intent tags
+        updateIntents(data.intent_tags || []);
+
+        // Update lead progress
+        if (data.lead_collecting) {
+            showLeadProgress(data);
+        }
+        if (data.lead_complete) {
+            completeLeadProgress();
+        }
+
+    } catch (e) {
+        typingEl.remove();
+        appendMessage('bot', '⚠️ Sorry, I encountered a connection error. Please try again.');
+    }
+
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+    input.focus();
+}
+
+// ── UI Helpers ──────────────────────────────────────────────────────────────
+function appendMessage(role, content) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+
+    const avatarIcon = role === 'bot' ? '🤖' : '👤';
+    const formattedContent = role === 'bot' ? formatMarkdown(content) : escapeHtml(content);
+
+    div.innerHTML = `
+        <div class="msg-avatar">${avatarIcon}</div>
+        <div>
+            <div class="msg-bubble">${formattedContent}</div>
+            <div class="msg-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg bot';
+    div.id = 'typing-msg';
+    div.innerHTML = `
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-bubble">
+            <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return div;
+}
+
+function updateIntents(tags) {
+    const strip = document.getElementById('intent-strip');
+    strip.innerHTML = tags.map(t => `<span class="intent-tag">${t}</span>`).join('');
+}
+
+function showLeadProgress(data) {
+    const section = document.getElementById('lead-progress-section');
+    section.style.display = '';
+    const progress = document.getElementById('lead-progress');
+    progress.innerHTML = leadFields.map((f, i) => {
+        const filled = Object.keys(data).length; // approximate step
+        let cls = i < filled ? 'done' : '';
+        return `<div class="lead-step ${cls}"><div class="dot">${i < filled ? '✓' : (i+1)}</div> ${f}</div>`;
+    }).join('');
+}
+
+function completeLeadProgress() {
+    const progress = document.getElementById('lead-progress');
+    progress.innerHTML = leadFields.map((f, i) =>
+        `<div class="lead-step done"><div class="dot">✓</div> ${f}</div>`
+    ).join('') + '<div class="panel-card" style="margin-top:10px;border-color:var(--accent);"><h4>✅ Lead Submitted!</h4><p>Details sent to the sales team.</p></div>';
+}
+
+function formatMarkdown(text) {
+    let html = escapeHtml(text);
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Horizontal rule
+    html = html.replace(/\n---\n/g, '<hr>');
+    // Line breaks  
+    html = html.replace(/\n/g, '<br>');
+    // Bullet lists (• or -)
+    html = html.replace(/(?:^|<br>)[•\-]\s+(.+?)(?=<br>|$)/g, '<li>$1</li>');
+    if (html.includes('<li>')) {
+        html = html.replace(/(<li>.*?<\/li>)+/g, '<ul>$&</ul>');
+    }
+    return html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+document.getElementById('msg-input').addEventListener('input', function() { autoResize(this); });
+
+async function startNewChat() {
+    await createNewConversation();
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = `
+        <div class="welcome" id="welcome-screen">
+            <div class="welcome-icon">🏥</div>
+            <h2>Welcome to HealthBot</h2>
+            <p>I'm your AI-powered healthcare products assistant. Ask me about product categories,
+            distribution opportunities, dealer programs, or bulk purchasing options.</p>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="sendQuick('What healthcare products do you offer?')">🩺 Product Range</button>
+                <button class="quick-btn" onclick="sendQuick('How do I become a dealer or distributor?')">🤝 Become a Partner</button>
+                <button class="quick-btn" onclick="sendQuick('Tell me about bulk purchase discounts')">📦 Bulk Pricing</button>
+                <button class="quick-btn" onclick="sendQuick('What territories are available for distribution?')">🌍 Territories</button>
+            </div>
+        </div>`;
+    document.getElementById('intent-strip').innerHTML = '';
+    document.getElementById('lead-progress-section').style.display = 'none';
+    loadStats();
+}
+
+// Boot
+init();
+</script>
+
+</body>
+</html>
